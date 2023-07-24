@@ -1,11 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import appAxios from "../../axios";
 import Swal from 'sweetalert2'
 
 
 export const getTasks = createAsyncThunk("task/getTasks", async () => {
     try {
-        const { data } = await axios.get("http://127.0.0.1:5000/api/")
+        const { data } = await appAxios.get("/api/")
         return data
     } catch (error) {
         console.log(error);
@@ -26,7 +26,7 @@ export const deleteTask = createAsyncThunk("task/deleteTask", async  (id) => {
             cancelButtonText: 'キャンセル'
         }).then(async (result) => {
             if (result.isConfirmed) {
-                await axios.delete(`http://127.0.0.1:5000/api/${id}`);
+                await appAxios.delete(`/api/${id}`);
                 deletedId = id
                 Swal.fire(
                     '削除されました！',
@@ -50,8 +50,16 @@ export const deleteTask = createAsyncThunk("task/deleteTask", async  (id) => {
 
 export const addTask = createAsyncThunk("task/addTask", async ({title, description}) => {
     try {
-        const { data } = await axios.post("http://127.0.0.1:5000/api/create", {"title": title,"description": description})
-        return data
+        if(title && description) {
+            const { data } = await appAxios.post("/api/create", {"title": title,"description": description})
+            return data
+        }else{
+            Swal.fire(
+                'エラー！',
+                `タイトルと説明は必須です。`,
+                'error'
+            );
+        }
     } catch (error) {
         console.log(error);
     }
@@ -60,7 +68,7 @@ export const addTask = createAsyncThunk("task/addTask", async ({title, descripti
 
 export const doneTask = createAsyncThunk("task/doneTask", async (id) => {
     try {
-        const { data } = await axios.get(`http://127.0.0.1:5000/api/${id}/done`)
+        const { data } = await appAxios.get(`/api/${id}/done`)
         return data
     } catch (error) {
         console.log(error);
@@ -105,7 +113,7 @@ const taskSlice = createSlice({
         [addTask.fulfilled]: (state, {payload}) => {
             return {
                 ...state,
-                tasks: state.tasks.concat(payload)
+                tasks: payload ? state.tasks.concat(payload) : state.tasks
             }
         },
 
